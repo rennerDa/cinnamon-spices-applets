@@ -40,6 +40,7 @@ if (typeof require !== 'undefined') {
 
 const USER_DESKTOP_PATH = FileUtils.getUserDesktopDir();
 const stripMarkupRegex = /(<([^>]+)>)/ig;
+const canUninstall = GLib.file_test('/usr/bin/cinnamon-remove-application', GLib.FileTest.EXISTS);
 
 const wordWrap = function(text, limit) {
   let regex = '.{1,' + limit + '}(\\s|$)|\\S+?(\\s|$)';
@@ -303,7 +304,8 @@ ApplicationContextMenuItem.prototype = {
     this.signals = new SignalManager.SignalManager(null);
     this._action = action;
     this.label = new St.Label({
-      text: label
+      text: label,
+      style: 'font-size: 11px;'
     });
     if (iconName !== null) {
       this.icon = new St.Icon({
@@ -319,6 +321,11 @@ ApplicationContextMenuItem.prototype = {
     this.addActor(this.label);
     this.signals.connect(this.actor, 'enter-event', Lang.bind(this, this.handleEnter));
     this.signals.connect(this.actor, 'leave-event', Lang.bind(this, this.handleLeave));
+    // Override padding to help prevent label truncation, the menu container width is restricted to the column width,
+    // so unless we turn the context menu into a modal somehow (not likely since it will fight for input with the parent),
+    // this is the most practical solution for the grid.
+    this.actor.set_style('padding-left: 6px !important; padding-right: 0px !important; width: 215px !important;');
+    this.setColumnWidths([8, 132])
   },
 
   handleEnter: function (actor, event) {
@@ -379,8 +386,7 @@ ApplicationContextMenuItem.prototype = {
         this.state.trigger('removeFavorite', this.buttonState.app.get_id());
         break;
       case 'uninstall':
-        Util.spawnCommandLine('gksu -m \'' + _('Please provide your password to uninstall this application')
-          + '\' /usr/bin/cinnamon-remove-application \'' + this.buttonState.app.get_app_info().get_filename() + '\'');
+        Util.spawnCommandLine('/usr/bin/cinnamon-remove-application \'' + this.buttonState.app.get_app_info().get_filename() + '\'');
         this.state.trigger('closeMenu');
         break;
       case 'run_with_nvidia_gpu':
@@ -448,6 +454,7 @@ AppListGridButton.prototype = {
       activate: false
     });
     this.actor.set_style_class_name('menu-application-button');
+    this.actor.set_style('padding-left: 0px; padding-right: 0px;')
     this.actor.x_align = this.state.isListView ? St.Align.START : St.Align.MIDDLE;
     this.actor.y_align = St.Align.MIDDLE;
     if (!this.state.isListView) {
@@ -623,6 +630,7 @@ AppListGridButton.prototype = {
     if (this.buttonState.appType === ApplicationType._applications) {
       this.menu = new PopupMenu.PopupSubMenu(this.actor);
       this.menu.actor.set_style_class_name('menu menu-context-menu menu-background starkmenu-background');
+      this.menu.actor.set_style('width: 225px !important;')
       this.menu.actor.set_opacity(245)
       this.menu.isOpen = false;
       this.buttonBox.add_actor(this.menu.actor);
@@ -888,7 +896,7 @@ AppListGridButton.prototype = {
   handleButtonRelease: function(actor, e){
     let button = !e ? 3 : e.get_button();
     if (button === 1) {
-      if (this.state.contextMenuIsOpen != null) {
+      if (this.state.contextMenuIsOpen) {
         if (this.menu.isOpen && this.menu._activeMenuItem) {
           this.menu._activeMenuItem.activate();
         } else {
@@ -1026,7 +1034,9 @@ AppListGridButton.prototype = {
       } else {
         addMenuItem(this, new ApplicationContextMenuItem(this.state, this.buttonState, _('Add to favorites'), 'add_to_favorites', 'non-starred'));
       }
-      addMenuItem(this, new ApplicationContextMenuItem(this.state, this.buttonState, _('Uninstall'), 'uninstall', 'edit-delete'));
+      if (canUninstall) {
+        addMenuItem(this, new ApplicationContextMenuItem(this.state, this.buttonState, _('Uninstall'), 'uninstall', 'edit-delete'));
+      }
       if (this.state.isBumblebeeInstalled) {
         addMenuItem(this, new ApplicationContextMenuItem(this.state, this.buttonState, _('Run with NVIDIA GPU'), 'run_with_nvidia_gpu', 'cpu'));
       }

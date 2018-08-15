@@ -1031,7 +1031,6 @@ FavoritesButton.prototype = {
         let icon_size = iconSize; //0.6*real_size;
         if (icon_size > MAX_FAV_ICON_SIZE)
             icon_size = MAX_FAV_ICON_SIZE;
-        this.actor.style = "padding-top: "+(icon_size / 3)+"px;padding-bottom: "+(icon_size / 3)+"px;";
 
         this.actor.add_style_class_name('menu-favorites-button');
 
@@ -1781,17 +1780,8 @@ RightButtonsBox.prototype = {
             if (this.menu.quicklinks[i] != ',Dr Who,' && this.menu.quicklinks[i] != ',,') {
                 let split = this.menu.quicklinks[i].split(',');
                 if (split[0] == 'separator') {
-                    this.separator = new PopupMenu.PopupSeparatorMenuItem();
-
-                    if (this.menu.quicklauncherLayout == 'labels') {
-                        this.separator.actor.set_style("padding: 0em 1.0em; min-width: 1px;");
-                    } else if (this.menu.quicklauncherLayout == 'both') {
-                        this.separator.actor.set_style("padding: 0em 2.25em; min-width: 1px;");
-                    } else {
-                        this.separator.actor.set_style("padding: 0em 1em; min-width: 1px;");
-                    }
-
-                    this.itemsBox.add_actor(this.separator.actor);
+                    let separator = new PopupMenu.PopupSeparatorMenuItem();
+                    this.itemsBox.add_actor(separator.actor);
                 }
                 else {
                     let split = this.menu.quicklinks[i].split(',');
@@ -3990,7 +3980,6 @@ MyApplet.prototype = {
         this.favsBox.add(this.favoritesBox, { y_align: St.Align.END, y_fill: false });
 
         this.separator = new PopupMenu.PopupSeparatorMenuItem();
-        this.separator.actor.set_style("padding: 0em 1em;");
 
         this.appsButton = new AllProgramsItem("", "go-next", this);
         this.resultsFoundButton = new ResultsFoundItem("5 results found", "edit-find", this, false);
