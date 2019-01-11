@@ -1,5 +1,15 @@
 Changelog
 
+2.4
+==
+- Switch to Cinnamon 4.0 as main supported version
+
+2.3.1
+==
+Bugfix
+--
+- Fix preview sizes for HighDPI mode
+
 2.3
 ==
 New Feature
